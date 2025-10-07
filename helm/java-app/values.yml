@@ -1,0 +1,41 @@
+replicaCount: 2
+
+image:
+  repository: 132669330971.dkr.ecr.us-east-2.amazonaws.com/jaihanspal
+  tag: "replace-me"        # Jenkins will set this to the new image tag (e.g., BUILD_NUMBER or SHA)
+  pullPolicy: IfNotPresent
+
+podAnnotations: {}
+
+serviceAccount:
+  create: true
+  name: ""
+
+service:
+  type: ClusterIP
+  port: 8080
+  metricsPort: 8081        # expose /actuator/prometheus here if you run a sidecar or different port; else reuse 8080
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+env: []    # e.g. - name: SPRING_PROFILES_ACTIVE  value: prod
+
+livenessProbe:
+  path: /actuator/health/liveness
+  port: 8080
+readinessProbe:
+  path: /actuator/health/readiness
+  port: 8080
+
+# Monitoring toggles
+monitoring:
+  enabled: true
+  path: /actuator/prometheus
+  interval: 30s
+  labels: {}

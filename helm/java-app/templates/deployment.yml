@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "java-app.fullname" . }}
+  labels: {{- include "java-app.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {{- include "java-app.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "java-app.selectorLabels" . | nindent 8 }}
+      annotations:
+        prometheus.io/scrape: "{{ .Values.monitoring.enabled }}"
+        prometheus.io/path: "{{ .Values.monitoring.path }}"
+        prometheus.io/port: "{{ .Values.service.port }}"
+    spec:
+      serviceAccountName: {{ include "java-app.serviceAccountName" . }}
+      containers:
+        - name: app
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+          env:
+            {{- toYaml .Values.env | nindent 12 }}
+          readinessProbe:
+            httpGet: { path: {{ .Values.readinessProbe.path }}, port: {{ .Values.readinessProbe.port }} }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: {{ .Values.livenessProbe.path }}, port: {{ .Values.livenessProbe.port }} }
+            initialDelaySeconds: 15
+            periodSeconds: 20
